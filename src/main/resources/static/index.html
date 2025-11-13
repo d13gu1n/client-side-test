@@ -45,7 +45,9 @@
                 </div>
                 <div class="tab-pane fade" id="stream" role="tabpanel">
                     <div class="container">
-                        <div id="load">Nothing here yet...</div>
+                        <div id="load" hx-sse="connect:/stream">
+                            <div id="load" hx-sse="swap:mesaage"></div>
+                        </div>
                     </div>
                 </div>
             </div>
