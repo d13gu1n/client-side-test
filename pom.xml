@@ -64,6 +64,10 @@
 			<artifactId>htmx.org</artifactId>
 			<version>1.6.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mustache</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>

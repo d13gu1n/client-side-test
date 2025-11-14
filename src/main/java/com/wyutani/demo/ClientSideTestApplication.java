@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.result.view.Rendering;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reactor.core.publisher.Flux;
 
@@ -27,10 +30,9 @@ public class ClientSideTestApplication {
 	}
 
 	@GetMapping(path = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-	public Flux<String> stream() {
-		return Flux.interval(Duration.ofSeconds(5)).map(
-			value -> value + ":" + System.currentTimeMillis()
-		);
+	public Flux<Rendering> stream() {
+		return Flux.interval(Duration.ofSeconds(5)).map(value -> Rendering.view("time").modelAttribute("value", value)
+		.modelAttribute("time", System.currentTimeMillis()).build());
 	}
 	public static void main(String[] args) {
 		SpringApplication.run(ClientSideTestApplication.class, args);
