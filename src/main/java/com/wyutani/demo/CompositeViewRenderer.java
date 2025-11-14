@@ -55,6 +55,76 @@ public class CompositeViewRenderer implements HandlerResultHandler {
         @SuppressWarnings("unchecked")
         Flux<Rendering> renderings = Flux.from((Publisher<Rendering>) result.getReturnValue());
         final ExchangeWraper wrapper = new ExchangeWrapper(exchange);
-        // TODO: Continue CompositeViewRenderer.java -> /home/dacevedom/spring-boot-js-demo/htmx
+        return exchange.getResponse().writeAndFlushWith(render(wrapper, renderings)
+            .map(buffers -> transform(exchange.getResponse().bufferFactory(), buffers, sse)));
+    }
+
+    private Publisher<DataBuffer> transform(DataBufferFactory factory, Publisher<DataBuffer> buffers, boolean sse) {
+        if (sse) {
+            buffers = Flux.from(buffers).map(buffer -> prefix(buffer, factory.allocateBuffer(buffer.capacity())));
+        }
+        return Flux.from(buffers).map(buffer -> buffer.write("\n\n", StandardCharsets.UTF_8));
+    }
+
+    private DataBuffer prefix(DataBuffer buffer, DataBuffer result) {
+        String body = buffer.toString(StandardCharsets.UTF_8);
+        body = "data:" + body.replace("\n", "\ndata:");
+        result.write(body, StandardCharsets.UTF_8);
+        DataBufferUtils.release(buffer);
+        return result;
+    }
+
+    private Flux<Flux<DataBuffer>> render(ExchangeWrapper exchange, Flux<Rendering> renderings) {
+        return renderings.flatMap(rendering -> render(exchange, rendering));
+    }
+
+    private Publisher<Flux<DataBuffer>> render(ExchangeWrapper exchange, Rendering rendering) {
+        Mono<View> view = null;
+        if (rendering.view() instanceof View) {
+            view = Mono.just((View) rendering.view());
+        } else {
+            view = resolver.resolveViewName((String) rendering.view(), exchange.getLocaleContext().getLocale());
+        }
+        return view.flatMap(actual -> actual.render(rendering.modelAttributes(), null, exchange))
+                .thenMany(Flux.defer(() -> exchange.release()));
+    }
+
+    static class ExchangeWrapper extends ServerWebExchangeDecorator {
+        private ResponseWrapper response;
+
+        protected ExchangeWrapper(ServerWebExchange delegate) {
+            super(delegate);
+            this.response = new ResponseWrapper(super.getResponse());
+        }
+
+        @Override
+        public ServerHttpResponse getResponse() {
+            return this.response;
+        }
+
+        public Flux<Flux<DataBuffer>> release() {
+            Flux<Flux<DataBuffer>> body = response.getBody();
+            this.response = new ResponseWrapper(super.getResponse());
+            return body;
+        }
+    }
+
+    static class ResponseWrapper extends ServerHttpResponseDecorator {
+        private Flux<Flux<DataBuffer>> body = Flux.empty();
+
+        public Flux<Flux<DataBuffer>> getBody() {
+            return body;
+        }
+
+        public ResponseWrapper(ServerHttpResponse delegate) {
+            super(delegate);
+        }
+
+        @Override
+        public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
+            return writeAndFlushWith(Mono.just(body));
+        }
+
+        // TODO: Continue writing CompositeViewRenderer.java -> /home/dacevedom/spring-boot-js-demo/htmx
     }
 }
