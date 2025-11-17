@@ -32,6 +32,12 @@ public class ClientSideTestApplication {
 			value -> value + ":" + System.currentTimeMillis()
 		);
 	}
+
+	@GetMapping(path = "/test")
+	public String test() {
+		return "<div id=\"hello\" hx-swap-oob=\"true\">Hello</div>\n"
+			+ "<div id=\"world\" hx-swap-oob=\"true\">World</div>";
+	}
 	public static void main(String[] args) {
 		SpringApplication.run(ClientSideTestApplication.class, args);
 	}
