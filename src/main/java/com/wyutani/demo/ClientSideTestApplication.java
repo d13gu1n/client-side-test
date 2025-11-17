@@ -32,6 +32,16 @@ public class ClientSideTestApplication {
 		return Flux.interval(Duration.ofSeconds(5)).map(value -> Rendering.view("time").modelAttribute("value", value)
 		.modelAttribute("time", System.currentTimeMillis()).build());
 	}
+
+	@GetMapping(path = "/test")
+	public Flux<Rendering> test() {
+		return Flux.just(
+			/* Rendering.view("test").modelAttribute("id", "hello")
+				.modelAttribute("value")
+				*/
+				// TODO: Complete Custom View Renderer for Test -> https://spring.io/blog/2021/12/17/client-side-development-with-spring-boot-applications#dynamic-content-with-htmx
+		);
+	}
 	public static void main(String[] args) {
 		SpringApplication.run(ClientSideTestApplication.class, args);
 	}
