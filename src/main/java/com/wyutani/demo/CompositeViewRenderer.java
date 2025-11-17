@@ -46,7 +46,7 @@ public class CompositeViewRenderer implements HandlerResultHandler {
     }
 
     @Override
-    public Mono<void> handleResult(ServerWebExchange exchange, HandlerResult result) {
+    public Mono<Void> handleResult(ServerWebExchange exchange, HandlerResult result) {
         String[] methodAnnotation = ((InvocableHandlerMethod) result.getHandler())
                 .getMethodAnnotation(RequestMapping.class).produces();
         MediaType type = methodAnnotation.length > 0 ? MediaType.valueOf(methodAnnotation[0]) : MediaType.TEXT_HTML;
@@ -54,7 +54,7 @@ public class CompositeViewRenderer implements HandlerResultHandler {
         boolean sse = MediaType.TEXT_EVENT_STREAM.includes(type);
         @SuppressWarnings("unchecked")
         Flux<Rendering> renderings = Flux.from((Publisher<Rendering>) result.getReturnValue());
-        final ExchangeWraper wrapper = new ExchangeWrapper(exchange);
+        final ExchangeWrapper wrapper = new ExchangeWrapper(exchange);
         return exchange.getResponse().writeAndFlushWith(render(wrapper, renderings)
             .map(buffers -> transform(exchange.getResponse().bufferFactory(), buffers, sse)));
     }
@@ -125,6 +125,11 @@ public class CompositeViewRenderer implements HandlerResultHandler {
             return writeAndFlushWith(Mono.just(body));
         }
 
-        // TODO: Continue writing CompositeViewRenderer.java -> /home/dacevedom/spring-boot-js-demo/htmx
+        @Override
+        public Mono<Void> writeAndFlushWith(Publisher<? extends Publisher<? extends DataBuffer>> body) {
+            Flux<Flux<DataBuffer>> map = Flux.from(body).map(publisher -> Flux.from(publisher));
+            this.body = this.body.concatWith(map);
+            return Mono.empty();
+        }
     }
 }
