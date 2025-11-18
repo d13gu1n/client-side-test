@@ -36,11 +36,10 @@ public class ClientSideTestApplication {
 	@GetMapping(path = "/test")
 	public Flux<Rendering> test() {
 		return Flux.just(
-			/* Rendering.view("test").modelAttribute("id", "hello")
-				.modelAttribute("value")
-				*/
-				// TODO: Complete Custom View Renderer for Test -> https://spring.io/blog/2021/12/17/client-side-development-with-spring-boot-applications#dynamic-content-with-htmx
-		);
+			Rendering.view("test").modelAttribute("id", "hello")
+				.modelAttribute("value", "Hello").build(),
+			Rendering.view("test").modelAttribute("id", "world")
+				.modelAttribute("value", "World").build());
 	}
 	public static void main(String[] args) {
 		SpringApplication.run(ClientSideTestApplication.class, args);
